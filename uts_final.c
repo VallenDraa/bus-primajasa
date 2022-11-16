@@ -15,6 +15,7 @@ const int NILAI_KURSI_KOSONG = 9999;
 const int JML_KURSI_EKONOMI = 61;
 const int JML_KURSI_BISNIS = 53;
 const int JML_KURSI_VIP = 40;
+const int JML_TOTAL_BUS = 12;
 
 // DEKLARASI ENUM
 typedef enum {
@@ -36,7 +37,7 @@ typedef struct {
 
 // Model Untuk Tiket
 typedef struct {
-	int no_trayek;
+	int no_bus;
 	int no_kursi;
 	Kelas_Bus kelas_tiket;
 	char jam_berangkat[6];
@@ -54,12 +55,13 @@ typedef struct {
 	char alamat[120];
 	Tiket tiket_ekonomi[4]; 
 	Tiket tiket_bisnis[4];
-	Tiket tiket_vip[4];
+	Tiket tiket_vip[2];
 } Penumpang;
 
 // Model Untuk Bus
 typedef struct {
-	Trayek trayek;
+	int idx_trayek; // berisi index untuk struct trayek
+  int idx_jadwal; // berisi index jadwal untuk properti jam_berangkat dan jam_tiba struct trayek
 	int kursi_ekonomi[61]; // kursi berisi index pada array penumpang
 	int kursi_bisnis[53]; // kursi berisi index pada array penumpang
 	int kursi_vip[40]; // kursi berisi index pada array penumpang
@@ -67,11 +69,10 @@ typedef struct {
 
 // DEKLARASI GLOBAL VARIABLE
 Trayek db_trayek[4]; // database berisi data terkait trayek
-Bus db_bus[4]; // database berisi data terkait bus (no urut bus akan sesuai dengan no trayek)
-Penumpang db_penumpang[200]; // database berisi data terkait 
+Bus db_bus[12]; // database berisi data terkait bus (no urut bus akan sesuai dengan no trayek)
+Penumpang db_penumpang[500]; // database berisi data terkait 
 long long total_profit; // menampung data keuangan perusahaan
 int input_menu; // menampung input menu dari user
-int a, x, y, z; // variable untuk index pada for loop
 int idx_pembeli = 0; // untuk menghitung jumlah pembeli
 
 
@@ -89,7 +90,7 @@ void form_data_tiket(Tiket *tiket, Kelas_Bus kelas_tiket);
 void tabel_kursi_ekonomi(int *arr_kursi);
 void tabel_kursi_bisnis(int *arr_kursi);
 void tabel_kursi_vip(int *arr_kursi);
-void tabel_trayek();
+void tabel_trayek(bool is_mode_bus);
 void tabel_jadwal();
 void tabel_pembeli();
 void tabel_pemesanan();
@@ -102,8 +103,8 @@ void util_print_center(char *prefix, char *str, char *div, int len, char *suffix
 // util_print_repeat digunakan untuk mencetak sebuah string sebanyak 'len' kali
 void util_print_repeat(char *prefix, char *str, int len, char *suffix);
 
-// util_back_to_menu digunakan untuk mencetak sebuah string sebanyak 'len' kali
-void util_back_to_menu();
+// util_transisi_menu digunakan untuk mencetak sebuah string sebanyak 'len' kali
+void util_transisi_menu(char *msg);
 
 // DEKLARASI PROSEDUR DB
 void db_trayek_init();
@@ -164,17 +165,17 @@ void menu_router_db() {
     system("cls");
 		// percabangan router database ketika user sudah menginput pilihan menu
     if (input_menu == 1) {
-			tabel_trayek();			
-      util_back_to_menu();
+			tabel_trayek(false);			
+      util_transisi_menu("");
 		} else if (input_menu == 2) {
       tabel_pembeli();
-      util_back_to_menu();
+      util_transisi_menu("");
 		} else if (input_menu == 3) {
       tabel_pemesanan();
-      util_back_to_menu();
+      util_transisi_menu("");
 		} else if (input_menu == 4) {
 			tabel_riwayat_perjalanan();
-      util_back_to_menu();
+      util_transisi_menu("");
 		} else if (input_menu == 5) {
 			break;
 		} 
@@ -184,7 +185,9 @@ void menu_input_data_penumpang() {
 	form_data_diri();
 	form_qty_pembelian_tiket();
 	
-	util_back_to_menu();
+  system("cls");
+  idx_pembeli += 1;
+	util_transisi_menu("1 data penumpang baru berhasil ditambahkan, Klik apa saja untuk kembali ke menu utama !");
 }
 
 void form_data_diri() {
@@ -226,9 +229,8 @@ void form_qty_pembelian_tiket() {
 	int qty_tiket_ekonomi = 0;
 	int qty_tiket_bisnis = 0;
 	int qty_tiket_vip = 0;
-  int a;
+  int i;
   system("cls");
-
 
   // meminta jumlah tiket ekonomi yang ingin dibeli
   do {
@@ -248,78 +250,78 @@ void form_qty_pembelian_tiket() {
 		fflush(stdin); scanf("%i", &qty_tiket_vip);
   } while (qty_tiket_vip > 2 || qty_tiket_vip <= 0);
 
+
   // pengisian data tiket
-  for (a = 0; a < qty_tiket_ekonomi; a++) {
-    printf("Tiket Ekonomi %i / %i\n", a + 1, qty_tiket_ekonomi);
-    util_print_repeat("", "-", 50, "\n");	
-    form_data_tiket(&db_penumpang[idx_pembeli].tiket_ekonomi[a], ekonomi);
+  for (i = 0; i < qty_tiket_ekonomi; i++) {
+    system("cls");
+    printf("Tiket Ekonomi %i / %i\n", i + 1, qty_tiket_ekonomi);
+    util_print_repeat("", "-", 50, "\n");
+    form_data_tiket(&db_penumpang[idx_pembeli].tiket_ekonomi[i], ekonomi);
   }
 
   // pengisian data tiket
-  for (a = 0; a < qty_tiket_bisnis; a++) {
-    printf("Tiket Bisnis %i / %i\n", a + 1, qty_tiket_bisnis);
-    util_print_repeat("", "-", 50, "\n");	
-    form_data_tiket(&db_penumpang[idx_pembeli].tiket_bisnis[a], bisnis);
+  for (i = 0; i < qty_tiket_bisnis; i++) {
+    system("cls");
+    printf("Tiket Bisnis %i / %i\n", i + 1, qty_tiket_bisnis);
+    form_data_tiket(&db_penumpang[idx_pembeli].tiket_bisnis[i], bisnis);
   }
 
   // pengisian data tiket
-  for (a = 0; a < qty_tiket_vip; a++) {
-    printf("Tiket VIP %i / %i\n", a + 1, qty_tiket_vip);
-    util_print_repeat("", "-", 50, "\n");	
-    form_data_tiket(&db_penumpang[idx_pembeli].tiket_vip[a], vip);
+  for (i = 0; i < qty_tiket_vip; i++) {
+    system("cls");
+    printf("Tiket VIP %i / %i\n", i + 1, qty_tiket_vip);
+    form_data_tiket(&db_penumpang[idx_pembeli].tiket_vip[i], vip);
   }
-
 }
 void form_data_tiket(Tiket *tiket, Kelas_Bus kelas_tiket) {
   int temp_waktu_berangkat;
-  int temp;
-  // meminta input dari user
-  do {
-    system("cls");
-    tabel_trayek();
-    printf("\n1. Masukkan Trayek [No. Urut Pada Tabel]: ");
-    fflush(stdin); scanf("%i", &tiket->no_trayek);
-  } while (tiket->no_trayek <= 0 || tiket->no_trayek > 4);
-  
-  while (true) {
-    system("cls");
-    tabel_jadwal(tiket->no_trayek - 1); // -1 untuk menyesuaikan input dengan index pada database
-    printf("2. Pilih Waktu Berangkat [1-3]: ");
-    fflush(stdin); scanf("%i", &temp_waktu_berangkat);
+  char success_msg[120];
 
-    if (temp_waktu_berangkat >= 1 && temp_waktu_berangkat <= 3){
-      strcpy(tiket->jam_berangkat, *db_trayek[tiket->no_trayek - 1].jam_berangkat);      
-      strcpy(tiket->jam_tiba, *db_trayek[tiket->no_trayek - 1].jam_tiba);      
+  // menampilkan tabel bus beserta rute, jadwal, dan harga
+  tabel_trayek(true);
+  // meminta input dari user
+  while (true) {
+    printf("\n1. Pilih Bus Tujuan [No. Urut Pada Tabel]: ");
+    fflush(stdin); scanf("%i", &tiket->no_bus);
+
+    if (tiket->no_bus >= 1 && tiket->no_bus <= 12) {
+      // -1 untuk menyesuaikan input dengan index pada database
+      tiket->no_bus = tiket->no_bus - 1;
+
+      // mengcopy jam berangkat dan tiba ke tiket penumpang
+      strcpy(tiket->jam_berangkat, *db_trayek[db_bus[tiket->no_bus].idx_trayek].jam_berangkat);      
+      strcpy(tiket->jam_tiba, *db_trayek[db_bus[tiket->no_bus].idx_trayek].jam_tiba);      
       break;
-    }
+    }  
+  }
+  
+  // menampilkan denah kursi pada bus
+  system("cls");
+  if (kelas_tiket == ekonomi) {
+    tabel_kursi_ekonomi(db_bus[tiket->no_bus].kursi_ekonomi);
+  } else if (kelas_tiket == bisnis) {
+    tabel_kursi_bisnis(db_bus[tiket->no_bus].kursi_bisnis);
+  } else {
+    tabel_kursi_vip(db_bus[tiket->no_bus].kursi_vip);
   }
   
   while (true) {
-    // system("cls");
-    if (kelas_tiket == ekonomi) {
-      tabel_kursi_ekonomi(db_bus[tiket->no_trayek].kursi_ekonomi);
-    } else if (kelas_tiket == bisnis) {
-      tabel_kursi_bisnis(db_bus[tiket->no_trayek].kursi_bisnis);
-    } else {
-      tabel_kursi_vip(db_bus[tiket->no_trayek].kursi_vip);
-    }
-
-    printf("3. Pilih Kursi Pada Bus:");
+    printf("2. Pilih Kursi Pada Bus:");
     fflush(stdin); scanf("%i", &tiket->no_kursi);
 
     if (kelas_tiket == ekonomi) {
-      if (db_bus[tiket->no_trayek].kursi_ekonomi[tiket->no_kursi] == NILAI_KURSI_KOSONG) {
-        db_bus[tiket->no_trayek].kursi_ekonomi[tiket->no_kursi] = idx_pembeli;
+      if (db_bus[tiket->no_bus].kursi_ekonomi[tiket->no_kursi] == NILAI_KURSI_KOSONG) {
+        db_bus[tiket->no_bus].kursi_ekonomi[tiket->no_kursi] = idx_pembeli;
         break;
       } 
     } else if (kelas_tiket == bisnis) {
-      if (db_bus[tiket->no_trayek].kursi_bisnis[tiket->no_kursi] == NILAI_KURSI_KOSONG) {
-        db_bus[tiket->no_trayek].kursi_bisnis[tiket->no_kursi] = idx_pembeli;
+      if (db_bus[tiket->no_bus].kursi_bisnis[tiket->no_kursi] == NILAI_KURSI_KOSONG) {
+        db_bus[tiket->no_bus].kursi_bisnis[tiket->no_kursi] = idx_pembeli;
         break;
       } 
     } else {
-      if (db_bus[tiket->no_trayek].kursi_vip[tiket->no_kursi] == NILAI_KURSI_KOSONG) {
-        db_bus[tiket->no_trayek].kursi_vip[tiket->no_kursi] = idx_pembeli;
+      if (db_bus[tiket->no_bus].kursi_vip[tiket->no_kursi] == NILAI_KURSI_KOSONG) {
+        db_bus[tiket->no_bus].kursi_vip[tiket->no_kursi] = idx_pembeli;
         break;
       } 
     }
@@ -327,9 +329,23 @@ void form_data_tiket(Tiket *tiket, Kelas_Bus kelas_tiket) {
 
   // memasukkan nilai yang tidak perlu input dari user
   tiket->kelas_tiket = kelas_tiket;
+  
+  // memasukkan harga ke tiket
+  if (kelas_tiket == ekonomi) {
+    tiket->harga = db_trayek[db_bus[tiket->no_bus].idx_trayek].harga_ekonomi[0];
+  } else if (kelas_tiket == bisnis) {
+    tiket->harga = db_trayek[db_bus[tiket->no_bus].idx_trayek].harga_bisnis[0];
+  } else {
+    if (db_bus[tiket->no_bus].idx_jadwal == 2) {
+      tiket->harga = db_trayek[db_bus[tiket->no_bus].idx_trayek].harga_vip[1];
+    } else {
+      tiket->harga = db_trayek[db_bus[tiket->no_bus].idx_trayek].harga_vip[0];
+    }
+  }
 }
 
 void tabel_kursi_ekonomi(int *arr_kursi) {
+  int x;
   int divisor = 1;
   char buffer[3];
   int idx_spasi = 2; // index untuk mencetak " "
@@ -364,6 +380,7 @@ void tabel_kursi_ekonomi(int *arr_kursi) {
   util_print_repeat("", "-", 30, "\n\n");
 }
 void tabel_kursi_bisnis(int *arr_kursi) {
+  int x;
   int divisor = 1;
   char buffer[3];
   int idx_spasi = 2; // index untuk mencetak " "
@@ -398,6 +415,7 @@ void tabel_kursi_bisnis(int *arr_kursi) {
   util_print_repeat("", "-", 25, "\n\n");
 }
 void tabel_kursi_vip(int *arr_kursi) {
+  int x;
   int divisor = 1;
   char buffer[3];
   int idx_spasi = 1; // index untuk mencetak " "
@@ -431,16 +449,19 @@ util_print_center("", "DENAH KURSI KELAS VIP", " ", 23, "\n");
   printf("HIJAU = Kosong\n");
   util_print_repeat("", "-", 23, "\n\n");
 }
-void tabel_trayek() {
+void tabel_trayek(bool is_mode_bus) {
   // untuk menampung nilai sementara konversi int ke string 
-  char buffer_int_to_str[10]; 
+  char buffer_int_to_str[10];
+  int x, y;
+  int idx_harga;
+  int idx_bus = 0;
 
   // cetak judul tabel  
-  util_print_center("", "LIST TRAYEK", " ",  107, "\n");
+  util_print_center("", is_mode_bus ? "DAFTAR BUS" : "LIST TRAYEK", " ",  107, "\n");
 
 	// header table atas jadwal
   util_print_repeat("+", "-", 107, "+\n");
-	util_print_center("|", "No", " ", 5, "|");
+	util_print_center("|", is_mode_bus ? "Bus" : "No", " ", 5, "|");
 	util_print_center("", "Trayek", " ", 26, "|");
 	util_print_center("", "Waktu", " ", 29, "|");
 	util_print_center("", "Harga Tiket Bus", " ", 44, "|\n");
@@ -458,20 +479,31 @@ void tabel_trayek() {
   // mencetak isi table
   for (x = 0; x < 4; x++) {
     for (y = 0; y < 3; y++) {
-      // print no urut tabel
-      if (y == floor(3/2)) {
-        sprintf(buffer_int_to_str, "%i", x + 1);
-        util_print_center("|", buffer_int_to_str, " ", 5, "|");
+      idx_harga = x == 3 && y == 2 ? 1 : 0;
 
+      // print no urut tabel
+      if (!is_mode_bus) {
+        if (y == floor(3/2)) {
+          sprintf(buffer_int_to_str, "%i", x + 1);
+          util_print_center("|", buffer_int_to_str, " ", 5, "|");
+        } else {
+          util_print_center("|", "", " ", 5, "|");
+        }
       } else {
-        util_print_center("|", "", " ", 5, "|");
+        sprintf(buffer_int_to_str, "%i", x + 1 + idx_bus);
+        util_print_center("|", buffer_int_to_str, " ", 5, "|");
+        idx_bus += 1;
       }
 
 
       // print nama trayek
-      y == round(3/2) 
-        ? util_print_center("", db_trayek[x].nama, " ", 26, "|")
-        : util_print_center("", "", " ", 26, "|");
+      if (!is_mode_bus) {
+        y == round(3/2)
+          ? util_print_center("", db_trayek[x].nama, " ", 26, "|")
+          : util_print_center("", "", " ", 26, "|");
+      } else {
+        util_print_center("", db_trayek[x].nama, " ", 26, "|");
+      }
 
 
       // print waktu keberangkatan dan tiba
@@ -480,25 +512,28 @@ void tabel_trayek() {
       
 
       // print harga ekonomi
-      sprintf(buffer_int_to_str, "Rp. %li", db_trayek[x].harga_ekonomi[x == 3 && y == 2 ? 1 : 0]);
+      sprintf(buffer_int_to_str, "Rp. %li", db_trayek[x].harga_ekonomi[idx_harga]);
       util_print_center("", buffer_int_to_str, " ", 14, "|"); 
 
       // print harga bisnis
-      sprintf(buffer_int_to_str, "Rp. %li", db_trayek[x].harga_bisnis[x == 3 && y == 2 ? 1 : 0]);
+      sprintf(buffer_int_to_str, "Rp. %li", db_trayek[x].harga_bisnis[idx_harga]);
       util_print_center("", buffer_int_to_str, " ", 14, "|"); 
 
       // print harga VIP
-      sprintf(buffer_int_to_str, "Rp. %li", db_trayek[x].harga_vip[x == 3 && y == 2 ? 1 : 0]);
+      sprintf(buffer_int_to_str, "Rp. %li", db_trayek[x].harga_vip[idx_harga]);
       util_print_center("", buffer_int_to_str, " ", 14, "|\n"); 
     }
 
     // footer table
+    idx_bus -= 1; // temporary
     util_print_repeat("+", "-", 107, "+\n");
   }
 }
 void tabel_jadwal(int idx_trayek) {
   // untuk menampung nilai sementara konversi int ke string 
   char buffer_int_to_str[50]; 
+  int x;
+  int penyesuai_idx_bus = idx_trayek * 3;
 
   // cetak judul tabel
   sprintf(buffer_int_to_str, "JADWAL %s", db_trayek[idx_trayek].nama);
@@ -519,7 +554,8 @@ void tabel_jadwal(int idx_trayek) {
   // mencetak isi table
   for (x = 0; x < 3; x++) {
     // pritn no urut jadwal pada tabel
-    sprintf(buffer_int_to_str, "%i", x + 1);
+    printf("%i", idx_trayek);
+    sprintf(buffer_int_to_str, "%i", x + 1 + penyesuai_idx_bus);
     util_print_center("|", buffer_int_to_str, " ", 5, "|");
 
     // print waktu keberangkatan dan tiba
@@ -540,6 +576,7 @@ void tabel_riwayat_perjalanan() {
 }
 
 void util_print_center(char *prefix, char *str, char *div, int len, char *suffix) {
+  int z;
   int margin = len - strlen(str);
   int margin_kiri = margin % 2 != 0 ? margin / 2 + 1 : margin / 2;
   int margin_kanan = margin / 2;
@@ -556,7 +593,8 @@ void util_print_center(char *prefix, char *str, char *div, int len, char *suffix
 	printf("%s", suffix); // mencetak karakter akhiran 
 }
 void util_print_repeat(char *prefix, char *str, int len, char *suffix) {
-	printf("%s", prefix); // mencetak string awalan
+	int z;
+  printf("%s", prefix); // mencetak string awalan
 	
 	// mencetak margin kiri
 	for (z = 0; z < len; z++) {
@@ -565,8 +603,10 @@ void util_print_repeat(char *prefix, char *str, int len, char *suffix) {
 	
 	printf("%s", suffix); // mencetak string akhiran
 }
-void util_back_to_menu() {
-	printf("\nKlik apa saja untuk kembali ke menu sebelumnya");
+void util_transisi_menu(char *msg) {
+  strcmp(msg, "") == 0
+    ? printf("\nKlik apa saja untuk kembali ke menu sebelumnya")
+    : printf("\n%s", msg);
 	getche();
 }
 
@@ -643,10 +683,28 @@ void db_trayek_init() {
 	db_trayek[3].harga_vip[1] = 225000;
 }
 void db_bus_init() {
+  int x, y;
+  int idx_trayek_bus = 0;
+  int idx_jadwal = 0;
+
 	// inisialisasi trayek pada database bus
-  for (x = 0; x < 4; x++) {
-    db_bus[x].trayek = db_trayek[x];
-    
+  for (x = 0; x < JML_TOTAL_BUS; x++) {
+    // mengcopy index trayek ke bus
+    if (idx_trayek_bus == 3) {
+      idx_trayek_bus = 0;
+    } else {
+      idx_trayek_bus += 1;
+    }
+    db_bus[x].idx_trayek = idx_trayek_bus;
+
+    // mengcopy index jadwal pada trayek ke bus
+    if (idx_jadwal == 2) {
+      idx_jadwal = 0;
+    } else {
+      idx_jadwal += 1;
+    }
+    db_bus[x].idx_jadwal = y;
+
     // memberi indikator kosong pada kursi penumpang untuk kelas ekonomi
     for (y = 0; y < JML_KURSI_EKONOMI; y++) {
       db_bus[x].kursi_ekonomi[y] = NILAI_KURSI_KOSONG;
@@ -669,7 +727,6 @@ bool util_is_date_valid(char *date) {
 	bool is_valid = true;
   char date_str[9];
   strcpy(date_str, date);
-
 
   // jika panjang string tidak 10 maka tidak valid 
   if (strlen(date_str) != 10) return !is_valid;
