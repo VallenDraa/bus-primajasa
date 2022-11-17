@@ -1,4 +1,10 @@
-// Program ini berfungsi untuk melakukan pembelian tiket untuk bus primajasa
+/*
+  Program ini berfungsi untuk melakukan pembelian tiket untuk bus primajasa
+  
+  CATATAN:
+    - Jumlah kursi pada bus dirubah sedikit agar bisa mengikuti bentuk denah pada soal
+*/ 
+
 
 // DEKLARASI PUSTAKA
 #include <stdio.h>
@@ -84,7 +90,7 @@ typedef struct {
 
 // DEKLARASI GLOBAL VARIABLE
 Trayek db_trayek[4]; // database berisi data trayek
-Bus db_bus[12]; // database berisi data bus (no urut bus akan sesuai dengan no trayek)
+Bus db_bus[12]; // database berisi data bus
 Penumpang db_penumpang[500]; // database berisi data penumpang 
 Penjualan db_penjualan; // database berisi data penjualan tiket beserta profit 
 int input_menu; // menampung input menu dari user
